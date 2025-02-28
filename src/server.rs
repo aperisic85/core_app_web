@@ -34,8 +34,8 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             // Parse headers and body
             let (headers, body) = parse_request(&request);
 
-            info!("Parsed Headers: {:?}", headers);
-            info!("Parsed Body: {}", body);
+            //info!("Parsed Headers: {:?}", headers);
+            //info!("Parsed Body: {}", body);
 
             // Write structured JSON logs
             if let Err(e) = write_json_log(peer_addr, headers, body).await {
