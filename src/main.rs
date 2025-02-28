@@ -4,7 +4,18 @@ use tokio::fs::OpenOptions;
 use tokio::task;
 use tracing::{info, error};
 use std::collections::HashMap;
-use chrono::Utc; // Import chrono for timestamps
+use chrono::Utc;
+use serde::{Serialize, Deserialize};
+use serde_json;
+
+/// Struct for logging requests as JSON
+#[derive(Serialize, Deserialize, Debug)]
+struct LogEntry {
+    timestamp: String,
+    peer_addr: String,
+    headers: HashMap<String, String>,
+    body: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,9 +51,9 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             info!("Parsed Headers: {:?}", headers);
             info!("Parsed Body: {}", body);
 
-            // Write to file
-            if let Err(e) = write_to_file(peer_addr, &headers, &body).await {
-                error!("Failed to write to file: {}", e);
+            // Write structured JSON logs
+            if let Err(e) = write_json_log(peer_addr, headers, body).await {
+                error!("Failed to write JSON log: {}", e);
             }
 
             // Example: Send response
@@ -82,29 +93,30 @@ fn parse_request(request: &str) -> (HashMap<String, String>, String) {
     (headers, body)
 }
 
-/// Writes the parsed data to a file with a timestamp
-async fn write_to_file(peer_addr: String, headers: &HashMap<String, String>, body: &str) -> Result<(), std::io::Error> {
+/// Writes structured JSON logs to `connections.json`
+async fn write_json_log(peer_addr: String, headers: HashMap<String, String>, body: String) -> Result<(), std::io::Error> {
     let mut file = OpenOptions::new()
         .append(true)
         .create(true)
-        .open("connections.log")
+        .open("connections.json")
         .await?;
 
     // Get the current timestamp
-    let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S");
+    let timestamp = Utc::now().to_rfc3339();
 
-    // Format the log entry
-    let mut log_entry = format!("\n--- New Request [{}] from {} ---\n", timestamp, peer_addr);
-    
-    for (key, value) in headers {
-        log_entry.push_str(&format!("{}: {}\n", key, value));
-    }
+    // Create a structured log entry
+    let log_entry = LogEntry {
+        timestamp,
+        peer_addr,
+        headers,
+        body,
+    };
 
-    log_entry.push_str(&format!("\nBody:\n{}\n", body));
-    log_entry.push_str("\n-------------------------\n");
+    // Convert to JSON
+    let json_log = serde_json::to_string(&log_entry)? + "\n"; // Append newline for easy reading
 
     // Write to file
-    file.write_all(log_entry.as_bytes()).await?;
-    
+    file.write_all(json_log.as_bytes()).await?;
+
     Ok(())
 }
