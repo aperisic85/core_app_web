@@ -4,6 +4,7 @@ use tokio::fs::OpenOptions;
 use tokio::task;
 use tracing::{info, error};
 use std::collections::HashMap;
+use chrono::Utc; // Import chrono for timestamps
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -81,7 +82,7 @@ fn parse_request(request: &str) -> (HashMap<String, String>, String) {
     (headers, body)
 }
 
-/// Writes the parsed data to a file
+/// Writes the parsed data to a file with a timestamp
 async fn write_to_file(peer_addr: String, headers: &HashMap<String, String>, body: &str) -> Result<(), std::io::Error> {
     let mut file = OpenOptions::new()
         .append(true)
@@ -89,8 +90,11 @@ async fn write_to_file(peer_addr: String, headers: &HashMap<String, String>, bod
         .open("connections.log")
         .await?;
 
+    // Get the current timestamp
+    let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S");
+
     // Format the log entry
-    let mut log_entry = format!("\n--- New Request from {} ---\n", peer_addr);
+    let mut log_entry = format!("\n--- New Request [{}] from {} ---\n", timestamp, peer_addr);
     
     for (key, value) in headers {
         log_entry.push_str(&format!("{}: {}\n", key, value));
