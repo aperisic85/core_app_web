@@ -38,12 +38,22 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             //info!("Parsed Body: {}", body);
 
             // Write structured JSON logs
-            if let Err(e) = write_json_log(peer_addr, headers, body).await {
+            if let Err(e) = write_json_log(peer_addr, headers, body.clone()).await {
                 error!("Failed to write JSON log: {}", e);
             }
 
+            let hacker_face  = r#"
+     .-""""""-.
+    |   0  0  |  
+    |    |  
+    |   ----  |  
+     '-......-'  
+    Hands up, hackers!  
+
+"#;
+      
             // Send response
-            let response = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHello, World!";
+            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}", hacker_face.len(), hacker_face);
             let _ = socket.write_all(response.as_bytes()).await;
         }
         Err(e) => {
