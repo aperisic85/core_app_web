@@ -1,7 +1,7 @@
-mod server; // Import the server module
+use core_app_web::server::start_server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    server::start_server("0.0.0.0:8080").await?;
+    start_server("0.0.0.0:8081").await?;
     Ok(())
 }

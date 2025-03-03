@@ -1,9 +1,11 @@
+
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::task;
 use tracing::{info, error};
-use crate::logging::write_json_log;
+
 use crate::parser::parse_request;
+use crate::logging::write_json_log;
 
 pub async fn start_server(address: &str) -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt::init();
@@ -34,16 +36,27 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             // Parse headers and body
             let (headers, body) = parse_request(&request);
 
-            info!("Parsed Headers: {:?}", headers);
-            info!("Parsed Body: {}", body);
+            // info!("Parsed Headers: {:?}", headers);
+            // info!("Parsed Body: {}", body);
 
             // Write structured JSON logs
             if let Err(e) = write_json_log(peer_addr, headers, body).await {
                 error!("Failed to write JSON log: {}", e);
             }
+           
+            let smiley = r#"
+            .-""""""-.
+          .'          '.
+         |  O      O  |
+         |   \    /   |
+         |    `--'    |
+          '.  ~  ~  .'
+            '-....-'
+        "#;
+
 
             // Send response
-            let response = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHello, World!";
+            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",smiley.len(),smiley);
             let _ = socket.write_all(response.as_bytes()).await;
         }
         Err(e) => {
