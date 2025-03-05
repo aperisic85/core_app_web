@@ -40,15 +40,15 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             // info!("Parsed Body: {}", body);
 
             // Write structured JSON logs
-            if let Err(e) = write_json_log(peer_addr, headers, body).await {
+            if let Err(e) = write_json_log(peer_addr.clone(), headers, body).await {
                 error!("Failed to write JSON log: {}", e);
             }
            
             let smiley = r#"
             .-""""""-.
-          .'          '.
+          .'          '
          |  O      O  |
-         |   \    /   |
+        <|   \    /   |>
          |    `--'    |
           '.  ~  ~  .'
             '-....-'
@@ -56,7 +56,7 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
 
 
             // Send response
-            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",smiley.len(),smiley);
+            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{} Hello: {}",smiley.len() + peer_addr.len(),smiley, peer_addr);
             let _ = socket.write_all(response.as_bytes()).await;
         }
         Err(e) => {
