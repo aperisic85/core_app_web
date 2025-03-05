@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 pub fn parse_request(request: &str) -> (HashMap<String, String>, String) {
     let mut headers = HashMap::new();
-    let mut body = String::new();
+    let body :String;
 
     let mut lines = request.split("\r\n");
 

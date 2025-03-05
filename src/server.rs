@@ -28,15 +28,17 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
     let mut buf = vec![0; 4096];
 
     match socket.read(&mut buf).await {
-        Ok(0) => return, // Connection closed
+        Ok(0) => {
+            info!("Connection closed by peer: {}", peer_addr);
+        }, // Connection closed
         Ok(n) => {
             let request = String::from_utf8_lossy(&buf[..n]);
 
             // Parse headers and body
             let (headers, body) = parse_request(&request);
 
-            info!("Parsed Headers: {:?}", headers);
-            info!("Parsed Body: {}", body);
+            //info!("Parsed Headers: {:?}", headers);
+            //info!("Parsed Body: {}", body);
 
             // Write structured JSON logs
             if let Err(e) = write_json_log(peer_addr.clone(), headers, body).await {

@@ -1,6 +1,5 @@
 use crate::models::LogEntry;
 use chrono::Local;
-use serde_json;
 use std::collections::HashMap;
 use tokio::fs::OpenOptions;
 use tokio::io::AsyncWriteExt;
