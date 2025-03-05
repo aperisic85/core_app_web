@@ -52,11 +52,13 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
          |    `--'    |
           '.  ~  ~  .'
             '-....-'
+        HANDS UP, HACKERS
+        
         "#;
 
 
             // Send response
-            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{} Hello: {}",smiley.len() + peer_addr.len(),smiley, peer_addr);
+            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{} from: {}",smiley.len() + peer_addr.len(),smiley, peer_addr);
             let _ = socket.write_all(response.as_bytes()).await;
         }
         Err(e) => {
