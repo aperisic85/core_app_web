@@ -59,9 +59,9 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
 
             // Send response
             let response = format!(
-                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}{}",
                 smiley.len() + peer_addr.len(),
-                smiley
+                smiley, peer_addr
             );
             let _ = socket.write_all(response.as_bytes()).await;
         }
