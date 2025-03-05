@@ -1,4 +1,5 @@
 
+
 use tokio::net::TcpListener;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::task;
@@ -36,8 +37,8 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             // Parse headers and body
             let (headers, body) = parse_request(&request);
 
-            // info!("Parsed Headers: {:?}", headers);
-            // info!("Parsed Body: {}", body);
+            info!("Parsed Headers: {:?}", headers);
+            info!("Parsed Body: {}", body);
 
             // Write structured JSON logs
             if let Err(e) = write_json_log(peer_addr.clone(), headers, body).await {
@@ -56,9 +57,20 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
         
         "#;
 
+           
+            let smiley = r#"
+            .-""""""-.
+          .'          '.
+         |  O      O  |
+         |   \    /   |
+         |    `--'    |
+          '.  ~  ~  .'
+            '-....-'
+        "#;
+
 
             // Send response
-            let response = format!("HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{} from: {}",smiley.len() + peer_addr.len(),smiley, peer_addr);
+            let response = "HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHello, World!";
             let _ = socket.write_all(response.as_bytes()).await;
         }
         Err(e) => {
