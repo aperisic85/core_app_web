@@ -3,9 +3,9 @@ use std::collections::HashMap;
 pub fn parse_request(request: &str) -> (HashMap<String, String>, String) {
     let mut headers = HashMap::new();
     let mut body = String::new();
-    
+
     let mut lines = request.split("\r\n");
-    
+
     if let Some(_) = lines.next() {} // Skip request line (e.g., GET / HTTP/1.1)
 
     for line in &mut lines {

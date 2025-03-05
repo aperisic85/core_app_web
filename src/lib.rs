@@ -1,4 +1,4 @@
 mod logging;
-pub mod server;
-mod parser;
 mod models;
+mod parser;
+pub mod server;
