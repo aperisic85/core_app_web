@@ -1,16 +1,28 @@
 use std::collections::HashMap;
 
-pub fn parse_request(request: &str) -> (HashMap<String, String>, String) {
+pub fn parse_request(request: &str) -> (HashMap<String, String>, String, HashMap<String, String>) {
     let mut headers = HashMap::new();
-    let body :String;
+    let mut body = String::new();
+    let mut query_params = HashMap::new();
 
-    let mut lines = request.split("\r\n");
+    let mut lines = request.lines();
 
-    if let Some(_) = lines.next() {} // Skip request line (e.g., GET / HTTP/1.1)
+    if let Some(request_line) = lines.next() {
+        let parts: Vec<&str> = request_line.split_whitespace().collect();
+        if parts.len() > 1 {
+            if let Some((_, query)) = parts[1].split_once('?') {
+                query_params = query
+                    .split('&')
+                    .filter_map(|pair| pair.split_once('='))
+                    .map(|(key, value)| (key.to_string(), value.to_string()))
+                    .collect();
+            }
+        }
+    }
 
-    for line in &mut lines {
+    for line in lines.clone() {
         if line.is_empty() {
-            break; // Empty line means headers are done
+            break;
         }
         if let Some((key, value)) = line.split_once(": ") {
             headers.insert(key.to_string(), value.to_string());
@@ -18,5 +30,6 @@ pub fn parse_request(request: &str) -> (HashMap<String, String>, String) {
     }
 
     body = lines.collect::<Vec<&str>>().join("\r\n");
-    (headers, body)
+
+    (headers, body, query_params)
 }
