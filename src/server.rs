@@ -41,7 +41,7 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             let (headers, body, query_params) = parse_request(&request)?;
 
             // Generate response based on query params
-            let response = if let Some(ip) = query_params.get("ping") {
+            let response = if let Some(ip) = query_params.get("p") {
                 generate_ping_response(ip)
             } else {
                 generate_default_response()
