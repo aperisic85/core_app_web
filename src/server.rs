@@ -4,6 +4,7 @@ use tokio::task;
 use tracing::{error, info};
 use std::process::Command;
 
+use crate::error::AppError;
 use crate::logging::write_json_log;
 use crate::parser::parse_request;
 
@@ -25,39 +26,35 @@ pub async fn start_server(address: &str) -> Result<(), Box<dyn std::error::Error
     }
 }
 
-async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String) {
+async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String) -> Result<(), AppError> {
     let mut buf = vec![0; 4096];
 
     match socket.read(&mut buf).await {
         Ok(0) => {
-            info!("Connection closed by peer: {}", peer_addr);
+            tracing::info!("Connection closed by peer: {}", peer_addr);
+            return Ok(()); // Graceful closure
         },
         Ok(n) => {
             let request = String::from_utf8_lossy(&buf[..n]);
 
-            // Parse headers, body, and query params
-            let (headers, body, query_params) = parse_request(&request);
+            // Parse the request
+            let (headers, body, query_params) = parse_request(&request)?;
 
-            // Write structured JSON logs
-            if let Err(e) = write_json_log(peer_addr.clone(), headers.clone(), body.clone()).await {
-                error!("Failed to write JSON log: {}", e);
-            }
-
-            // Generate response based on request
+            // Generate response based on query params
             let response = if let Some(ip) = query_params.get("ping") {
                 generate_ping_response(ip)
             } else {
                 generate_default_response()
             };
 
-            // Send response
-            let _ = socket.write_all(response.as_bytes()).await;
-        }
-        Err(e) => {
-            error!("Error reading from socket: {}", e);
-        }
+            socket.write_all(response.as_bytes()).await?;
+        },
+        Err(e) => return Err(AppError::IoError(e)),
     }
+
+    Ok(())
 }
+
 
 fn generate_ping_response(ip: &str) -> String {
     let ping_result = ping_ip(ip);
@@ -78,8 +75,8 @@ fn generate_default_response() -> String {
 :     '.__..'     :
  \     .-""-.    /
   '.          .'
-    '-......-'
-HELLO, HACKER!
+    '-......-
+    HELLO, HACKER!
     "#;
 
     format!(

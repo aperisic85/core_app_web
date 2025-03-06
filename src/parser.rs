@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use crate::error::AppError;
 
-pub fn parse_request(request: &str) -> (HashMap<String, String>, String, HashMap<String, String>) {
+pub fn parse_request(request: &str) -> Result<(HashMap<String, String>, String, HashMap<String, String>), AppError> {
     let mut headers = HashMap::new();
     let mut body = String::new();
     let mut query_params = HashMap::new();
@@ -17,6 +18,8 @@ pub fn parse_request(request: &str) -> (HashMap<String, String>, String, HashMap
                     .map(|(key, value)| (key.to_string(), value.to_string()))
                     .collect();
             }
+        } else {
+            return Err(AppError::ParseError("Invalid request line".to_string()));
         }
     }
 
@@ -26,10 +29,12 @@ pub fn parse_request(request: &str) -> (HashMap<String, String>, String, HashMap
         }
         if let Some((key, value)) = line.split_once(": ") {
             headers.insert(key.to_string(), value.to_string());
+        } else {
+            return Err(AppError::ParseError(format!("Invalid header format: {}", line)));
         }
     }
 
     body = lines.collect::<Vec<&str>>().join("\r\n");
 
-    (headers, body, query_params)
+    Ok((headers, body, query_params))
 }
