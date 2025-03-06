@@ -1,8 +1,8 @@
+use std::process::Command;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use tokio::task;
 use tracing::{error, info};
-use std::process::Command;
 
 use crate::error::AppError;
 use crate::logging::write_json_log;
@@ -40,21 +40,26 @@ async fn handle_connection(mut socket: tokio::net::TcpStream, peer_addr: String)
             // Parse the request
             let (headers, body, query_params) = parse_request(&request)?;
 
+            // Log the request using write_json_log
+            write_json_log(peer_addr.clone(), headers.clone(), body.clone()).await?;
+
             // Generate response based on query params
-            let response = if let Some(ip) = query_params.get("p") {
+            let response = if query_params.is_empty() {
+                generate_default_response()
+            } else if let Some(ip) = query_params.get("ping") {
                 generate_ping_response(ip)
             } else {
-                generate_default_response()
+                // Log the bad query parameters
+                tracing::info!("Bad query parameters: {:?}", query_params);
+                return Err(AppError::InvalidRequest("Invalid query parameters".to_string()));
             };
 
             socket.write_all(response.as_bytes()).await?;
+            Ok(())
         },
-        Err(e) => return Err(AppError::IoError(e)),
+        Err(e) => Err(AppError::IoError(e)),
     }
-
-    Ok(())
 }
-
 
 fn generate_ping_response(ip: &str) -> String {
     let ping_result = ping_ip(ip);
@@ -86,12 +91,15 @@ fn generate_default_response() -> String {
     )
 }
 
+fn generate_error_response(message: &str) -> String {
+    format!("HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nContent-Length: {}\r\n\r\n{}", 
+            message.len(), 
+            message)
+}
+
+
 fn ping_ip(ip: &str) -> String {
-    let output = Command::new("ping")
-        .arg("-c")
-        .arg("2")
-        .arg(ip)
-        .output();
+    let output = Command::new("ping").arg("-c").arg("2").arg(ip).output();
 
     match output {
         Ok(result) => String::from_utf8_lossy(&result.stdout).to_string(),

@@ -10,4 +10,7 @@ pub enum AppError {
 
     #[error("Unexpected error: {0}")]
     Unexpected(String),
+
+    #[error("Invalid request: {0}")]
+    InvalidRequest(String),
 }

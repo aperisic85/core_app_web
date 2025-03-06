@@ -1,7 +1,9 @@
-use std::collections::HashMap;
 use crate::error::AppError;
+use std::collections::HashMap;
 
-pub fn parse_request(request: &str) -> Result<(HashMap<String, String>, String, HashMap<String, String>), AppError> {
+pub fn parse_request(
+    request: &str,
+) -> Result<(HashMap<String, String>, String, HashMap<String, String>), AppError> {
     let mut headers = HashMap::new();
     let mut body = String::new();
     let mut query_params = HashMap::new();
@@ -30,7 +32,10 @@ pub fn parse_request(request: &str) -> Result<(HashMap<String, String>, String, 
         if let Some((key, value)) = line.split_once(": ") {
             headers.insert(key.to_string(), value.to_string());
         } else {
-            return Err(AppError::ParseError(format!("Invalid header format: {}", line)));
+            return Err(AppError::ParseError(format!(
+                "Invalid header format: {}",
+                line
+            )));
         }
     }
 
